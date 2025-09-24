@@ -1,0 +1,185 @@
+﻿@model List<AkumsPOC.Controllers.GstRecord>
+
+@{
+    ViewData["Title"] = "GST Dashboard";
+}
+
+<!-- Hero Banner -->
+<div class="p-4 mb-4 text-center text-white shadow-sm" style="background-color:#0a2a66;">
+    <img src="/images/gst-logo.png" alt="GST Logo" style="height: 70px;" class="mb-2">
+    <h1 class="fw-bold">Goods and Services Tax (GST) Portal</h1>
+    <p class="mb-0">Search GSTIN details, check status, and download GST returns</p>
+</div>
+
+<!-- Quick Stats -->
+<div class="container mb-4">
+    <div class="row text-center">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <i class="bi bi-database text-primary fs-2"></i>
+                    <h6 class="text-muted">Total GSTINs</h6>
+                    <h2 class="fw-bold text-primary">@Model.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <i class="bi bi-check-circle text-success fs-2"></i>
+                    <h6 class="text-muted">Active</h6>
+                    <h2 class="fw-bold text-success">@Model.Count(r => r.Status == "Active")</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <i class="bi bi-x-circle text-danger fs-2"></i>
+                    <h6 class="text-muted">Cancelled</h6>
+                    <h2 class="fw-bold text-danger">@Model.Count(r => r.Status == "Cancelled")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Button -->
+<div class="container text-end mb-3">
+    <form method="post" asp-action="Logout" class="d-inline">
+        <button type="submit" class="btn btn-danger btn-sm shadow-sm">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+    </form>
+</div>
+
+<!-- GST Portal Dashboard -->
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header text-white" style="background-color:#0a2a66;">
+            <h5 class="mb-0"><i class="bi bi-search"></i> GSTIN Search & Returns</h5>
+        </div>
+        <div class="card-body">
+
+            <!-- Search Bar -->
+            <div class="p-3 mb-4 bg-light rounded shadow-sm">
+                <div class="input-group input-group-lg">
+                    <input type="text" id="gstSearch" class="form-control"
+                           placeholder="Enter GSTIN or Business Name (e.g. 22AAAAA0000A1Z5 or ABC Pvt Ltd)" />
+                    <button class="btn btn-success" onclick="searchGstin()">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- GST Records Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered table-striped align-middle shadow-sm">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>GSTIN</th>
+                            <th>Trade/Business Name</th>
+                            <th>State</th>
+                            <th>Status</th>
+                            <th>Download Return</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gstTable">
+                        @foreach (var record in Model)
+                        {
+                            <tr>
+                                <td><span class="fw-bold">@record.Gstin</span></td>
+                                <td>@record.Name</td>
+                                <td>@record.State</td>
+                                <td>
+                                    @if (record.Status == "Active")
+                                    {
+                                        <span class="badge bg-success px-3 py-2">
+                                            <i class="bi bi-check-circle"></i> Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger px-3 py-2">
+                                            <i class="bi bi-x-circle"></i> Cancelled
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("DownloadPdf", "Gst", new { gstin = record.Gstin })"
+                                       class="btn btn-outline-danger btn-sm shadow-sm"
+                                       title="Download GST Return (PDF)">
+                                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Popup Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-0" id="modalMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<script>
+    function searchGstin() {
+        var searchQuery = document.getElementById("gstSearch").value.trim();
+
+        fetch('/Gst/Search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'searchQuery=' + encodeURIComponent(searchQuery)
+        })
+            .then(response => response.json())
+            .then(data => {
+                var tableBody = document.getElementById("gstTable");
+                tableBody.innerHTML = "";
+
+                if (data.success) {
+                    data.gstRecords.forEach(record => {
+                        var downloadUrl = `/Gst/DownloadPdf?gstin=${encodeURIComponent(record.gstin)}`;
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><span class="fw-bold">${record.gstin}</span></td>
+                                <td>${record.name}</td>
+                                <td>${record.state}</td>
+                                <td>
+                                    ${record.status === "Active"
+                                        ? '<span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle"></i> Active</span>'
+                                        : '<span class="badge bg-danger px-3 py-2"><i class="bi bi-x-circle"></i> Cancelled</span>'}
+                                </td>
+                                <td>
+                                    <a href="${downloadUrl}" class="btn btn-outline-danger btn-sm shadow-sm"
+                                       title="Download GST Return (PDF)">
+                                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    document.getElementById("modalMessage").innerText = data.message;
+                    new bootstrap.Modal(document.getElementById('errorModal')).show();
+                }
+            });
+    }
+</script>

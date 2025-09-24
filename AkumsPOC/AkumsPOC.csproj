@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\NewFolder1\**" />
+    <Content Remove="Views\NewFolder1\**" />
+    <EmbeddedResource Remove="Views\NewFolder1\**" />
+    <None Remove="Views\NewFolder1\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\PlanPDFs\BasicPlan.pdf" />
+    <Content Remove="wwwroot\PlanPDFs\PremiumPlan.pdf" />
+    <Content Remove="wwwroot\PlanPDFs\User1Plan.pdf" />
+    <Content Remove="wwwroot\PlanPDFs\User2Plan.pdf" />
+    <Content Remove="wwwroot\PlanPDFs\User3Plan.pdf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+  </ItemGroup>
+
+</Project>

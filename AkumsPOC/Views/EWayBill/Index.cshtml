@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "Download E-Waybill";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Download E-Waybill</h2>
+
+    <!-- Filter Form -->
+    <form method="post" asp-action="Index" class="row g-3 justify-content-center">
+        <div class="col-md-3">
+            <label for="month" class="form-label">Select Month</label>
+            <select name="month" id="month" class="form-select" required>
+                <option value="">-- Select Month --</option>
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="year" class="form-label">Select Year</label>
+            <select name="year" id="year" class="form-select" required>
+                @for (int y = DateTime.Now.Year; y >= 2020; y--)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Check Bills</button>
+        </div>
+    </form>
+
+    <!-- Message & Export -->
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info mt-4 text-center">
+            @TempData["Message"]
+        </div>
+
+        <form method="post" asp-action="ExportToExcel" class="text-center mt-3">
+            <input type="hidden" name="month" value="@TempData["Month"]" />
+            <input type="hidden" name="year" value="@TempData["Year"]" />
+            <button type="submit" class="btn btn-success">Export to Excel</button>
+        </form>
+    }
+</div>
